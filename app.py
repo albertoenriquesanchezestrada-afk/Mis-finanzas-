@@ -104,8 +104,19 @@ if not df.empty and "Tipo" in df.columns and "Monto" in df.columns:
 
     st.subheader("📋 Historial de Transacciones")
     st.dataframe(df, use_container_width=True)
+
+    # --- OPCIÓN PARA RESTABLECER ---
+    st.divider()
+    with st.expander("⚙️ Opciones avanzadas / Restablecer"):
+        st.warning("⚠️ Esta acción borrará todas las transacciones guardadas.")
+        if st.button("🗑️ Restablecer todas las transacciones"):
+            if os.path.exists(ARCHIVO_DATOS):
+                os.remove(ARCHIVO_DATOS)
+            st.success("Historial borrado correctamente.")
+            st.rerun()
 else:
     st.info("Aún no tienes registros guardados.")
+
 
 
 
