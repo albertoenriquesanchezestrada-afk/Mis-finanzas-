@@ -1,25 +1,32 @@
 import datetime
+import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
-from streamlit_gsheets import GSheetsConnection
 
 # Configuración de página
 st.set_page_config(
     page_title="Control de Finanzas", page_icon="💰", layout="centered"
 )
 
-st.title("💰 Control de Finanzas")
+ARCHIVO_DATOS = "finanzas.csv"
 
-# Conexión con Google Sheets
-try:
-    conn = st.connection("gsheets", type=GSheetsConnection)
-    df = conn.read(ttl="0m")
-    df = pd.DataFrame(df)
-except Exception:
-    df = pd.DataFrame(
+
+# Cargar datos desde CSV local
+def cargar_datos():
+    if os.path.exists(ARCHIVO_DATOS):
+        try:
+            return pd.read_csv(ARCHIVO_DATOS)
+        except Exception:
+            pass
+    return pd.DataFrame(
         columns=["Fecha", "Tipo", "Categoría", "Monto", "Descripción"]
     )
+
+
+df = cargar_datos()
+
+st.title("💰 Control de Finanzas")
 
 # --- REGISTRO DE TRANSACCIONES ---
 st.header("📝 Registrar Transacción")
@@ -54,15 +61,11 @@ with st.form("registro_form", clear_on_submit=True):
                 ]
             )
 
-            df_actualizado = pd.concat([df, nueva_fila], ignore_index=True)
-            try:
-                conn.update(data=df_actualizado)
-                st.success(f"✅ {tipo} de ${monto:,.2f} guardado con éxito.")
-                st.rerun()
-            except Exception as e:
-                st.error(
-                    "Error al guardar en Google Sheets. Revisa los Secrets de la app."
-                )
+            df = pd.concat([df, nueva_fila], ignore_index=True)
+            df.to_csv(ARCHIVO_DATOS, index=False)
+
+            st.success(f"✅ {tipo} de ${monto:,.2f} guardado correctamente.")
+            st.rerun()
         else:
             st.error("❌ Ingresa un monto mayor a 0 y una categoría.")
 
@@ -103,5 +106,6 @@ if not df.empty and "Tipo" in df.columns and "Monto" in df.columns:
     st.dataframe(df, use_container_width=True)
 else:
     st.info("Aún no tienes registros guardados.")
+
 
 
